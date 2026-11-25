@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Explore the JewelNest collections.">
+<title>JewelNest | Collections</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="collections.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body class="collection-page">
+<header class="collection-header">
+<a class="collection-logo" href="jewelnest.html" aria-label="JewelNest home">JEWEL<span>NEST</span></a>
+<div class="collection-header-actions">
+<a class="collection-home-link" href="jewelnest.html"><i class="fa fa-arrow-left" aria-hidden="true"></i> Back to home</a>
+<button class="collection-nav-action" type="button" data-open-login><i class="fa fa-user-o"></i> <span id="nav-login-label">Login</span></button>
+<button class="collection-nav-action" type="button" data-open-wishlist><i class="fa fa-heart-o"></i> Wishlist <span data-wishlist-count>0</span></button>
+<button class="collection-nav-action" type="button" data-open-cart><i class="fa fa-shopping-bag"></i> Cart <span data-cart-count>0</span></button>
+</div>
+</header>
+
+<nav class="collection-nav" aria-label="Main navigation">
+<a href="jewelnest.html">HOME</a>
+<a href="collections.html?category=gold">GOLD JEWELLERY</a>
+<a href="collections.html?category=diamond">DIAMOND</a>
+<a href="collections.html?category=coins">COINS</a>
+<a href="collections.html?category=silver">SILVER</a>
+<a href="collections.html?category=gifts">GIFTS</a>
+<a href="collections.html?category=digital-gold">DIGI GOLD</a>
+<a href="collections.html?category=schemes">SCHEMES</a>
+</nav>
+
+<main>
+<section class="collection-hero">
+<div class="collection-hero-inner">
+<p class="eyebrow" id="collection-eyebrow">THE JEWELNEST COLLECTION</p>
+<h1 id="collection-title">Discover JewelNest</h1>
+<p id="collection-description">Thoughtful designs to treasure, for every chapter of your story.</p>
+<a class="collection-hero-link" href="#collection-items">EXPLORE THE EDIT <i class="fa fa-arrow-down" aria-hidden="true"></i></a>
+</div>
+<div class="collection-hero-art" aria-hidden="true">
+<span class="collection-art-orbit collection-art-orbit--one"></span>
+<span class="collection-art-orbit collection-art-orbit--two"></span>
+<i class="fa fa-diamond"></i>
+</div>
+</section>
+
+<section class="collection-content" id="collection-items">
+<div class="collection-section-heading">
+<div>
+<p class="eyebrow">MADE TO BE YOURS</p>
+<h2 id="collection-subtitle">JewelNest, in detail</h2>
+</div>
+<p id="collection-note">Explore the pieces and stories in this JewelNest edit.</p>
+</div>
+<div class="collection-grid" id="collection-grid"></div>
+<div class="collection-empty" id="collection-empty" hidden>
+<p>We couldn’t find that collection.</p>
+<a href="jewelnest.html">Return to JewelNest</a>
+</div>
+</section>
+</main>
+
+<footer class="collection-footer">
+<a class="collection-footer-logo" href="jewelnest.html">JEWEL<span>NEST</span></a>
+<p>Jewellery for every chapter of your story.</p>
+<a href="jewelnest.html">Return to the JewelNest homepage <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
+</footer>
+</body>
+</html>
