@@ -146,6 +146,35 @@ a {
   color: var(--gold);
 }
 
+.search-box button,
+.collection-search button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.search-box button:hover i,
+.collection-search button:hover i {
+  color: var(--teal);
+}
+
+.search-box input[type="search"],
+.collection-search input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-box input::-webkit-search-cancel-button,
+.collection-search input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
 .head-icons {
   color: var(--ink-soft);
   text-align: center;
@@ -2151,5 +2180,68 @@ a {
     flex-direction: column;
     gap: 12px;
     padding: 24px 5%;
+  }
+}
+
+/* Search on the collection pages */
+.collection-search {
+  display: flex;
+  flex: 1 1 220px;
+  max-width: 300px;
+  height: 40px;
+  align-items: center;
+  margin-left: auto;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--cream);
+}
+
+.collection-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.collection-search:focus-within,
+.search-box:focus-within {
+  border-color: var(--teal);
+}
+
+/* Weight + price row on product cards */
+.collection-card-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.collection-card-meta strong {
+  color: var(--teal);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .collection-header {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .collection-search {
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+    margin-left: 0;
   }
 }

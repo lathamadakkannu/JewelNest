@@ -13,7 +13,11 @@
 </head>
 <body class="collection-page">
 <header class="collection-header">
-<a class="collection-logo" href="index.html aria-label="JewelNest home">JEWEL<span>NEST</span></a>
+<a class="collection-logo" href="index.html" aria-label="JewelNest home">JEWEL<span>NEST</span></a>
+<form class="collection-search" role="search" action="collections.html" method="get">
+<input type="search" name="q" data-search-input placeholder="Search jewellery..." maxlength="50" required aria-label="Search jewellery">
+<button type="submit" aria-label="Search"><i class="fa fa-search" aria-hidden="true"></i></button>
+</form>
 <div class="collection-header-actions">
 <a class="collection-home-link" href="index.html"><i class="fa fa-arrow-left" aria-hidden="true"></i> Back to home</a>
 <button class="collection-nav-action" type="button" data-open-login><i class="fa fa-user-o"></i> <span id="nav-login-label">Login</span></button>
@@ -58,7 +62,7 @@
 </div>
 <div class="collection-grid" id="collection-grid"></div>
 <div class="collection-empty" id="collection-empty" hidden>
-<p>We couldn’t find that collection.</p>
+<p id="collection-empty-message">We couldn’t find that collection.</p>
 <a href="index.html">Return to JewelNest</a>
 </div>
 </section>

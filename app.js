@@ -18,9 +18,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  let wishlist = storage.get("jewelnest-wishlist", []);
-  let cart = storage.get("jewelnest-cart", []);
   let user = storage.get("jewelnest-user", null);
+  let wishlist = [];
+  let cart = [];
+  // Action the visitor tried before logging in (add to cart, add to wishlist, open cart...).
+  // It runs automatically as soon as the login is completed.
+  let pendingAction = null;
+
+  // Cart and wishlist belong to the logged-in account
+  const userKey = (name) => `jewelnest-${name}:${user ? user.email.toLowerCase() : "guest"}`;
+
+  function loadUserData() {
+    wishlist = user ? storage.get(userKey("wishlist"), []) : [];
+    cart = user ? storage.get(userKey("cart"), []) : [];
+  }
+
+  function saveUserData() {
+    if (!user) return;
+    storage.set(userKey("wishlist"), wishlist);
+    storage.set(userKey("cart"), cart);
+  }
+
+  loadUserData();
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+  }
 
   document.body.insertAdjacentHTML("beforeend", `
     <div class="modal-backdrop" id="login-backdrop" hidden>
@@ -100,7 +123,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     loginForm.hidden = false;
-    document.querySelector(".login-subtitle").hidden = false;
+    const subtitle = document.querySelector(".login-subtitle");
+    subtitle.hidden = false;
+    subtitle.textContent = pendingAction
+      ? "Please log in to continue. We’ll finish what you started right after."
+      : "Enter your details to continue.";
     document.getElementById("account-view").hidden = true;
     document.getElementById("login-title").textContent = "Sign in to your account";
     loginBackdrop.hidden = false;
@@ -109,6 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function closeLogin() {
+    pendingAction = null;
     loginBackdrop.classList.remove("show");
     setTimeout(() => { loginBackdrop.hidden = true; }, 180);
   }
@@ -163,17 +191,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     user = { name: document.getElementById("login-name").value.trim(), email: document.getElementById("login-email").value.trim() };
     storage.set("jewelnest-user", user);
+    loadUserData();
+    const waitingAction = pendingAction; // closeLogin() clears it, so keep a copy
     updateUserName();
     loginForm.reset();
     fields.forEach((field) => setFieldError(field, ""));
     closeLogin();
-    showToast(`Login successful. Welcome, ${user.name}!`);
+    updateCounts();
+    refreshAllCards();
+    // Finish what the visitor tried to do before logging in
+    const result = waitingAction ? waitingAction() : "";
+    showToast(result ? `Login successful. ${result}` : `Login successful. Welcome, ${user.name}!`);
   });
 
   document.querySelectorAll("[data-close-modal]").forEach((button) => button.addEventListener("click", closeLogin));
   document.getElementById("logout-button").addEventListener("click", () => {
     user = null;
     storage.set("jewelnest-user", null);
+    loadUserData();
+    closeDrawer();
+    updateCounts();
+    refreshAllCards();
     updateUserName();
     loginForm.hidden = false;
     document.querySelector(".login-subtitle").hidden = false;
@@ -242,12 +280,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     drawerContent.innerHTML = items.map((item) => `
       <div class="drawer-item">
-        ${item.image ? `<img src="${item.image}" alt="${item.title}">` : `<span class="drawer-item-icon"><i class="fa fa-diamond"></i></span>`}
+        ${item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.title)}">` : `<span class="drawer-item-icon"><i class="fa fa-diamond"></i></span>`}
         <div class="drawer-item-info">
-          <h3>${item.title}</h3>
-          ${item.price ? `<strong>${item.price}</strong>` : ""}
+          <h3>${escapeHtml(item.title)}</h3>
+          ${item.price ? `<strong>${escapeHtml(item.price)}</strong>` : ""}
         </div>
-        <button type="button" class="drawer-remove" data-remove-item="${item.id}" data-remove-type="${type}" aria-label="Remove ${item.title}">&times;</button>
+        <button type="button" class="drawer-remove" data-remove-item="${escapeHtml(item.id)}" data-remove-type="${type}" aria-label="Remove ${escapeHtml(item.title)}">&times;</button>
       </div>
     `).join("");
   }
@@ -255,8 +293,8 @@ document.addEventListener("DOMContentLoaded", () => {
   drawerBackdrop.addEventListener("click", closeDrawer);
   document.querySelectorAll("[data-close-drawer]").forEach((button) => button.addEventListener("click", closeDrawer));
   document.querySelectorAll("[data-open-login]").forEach((button) => button.addEventListener("click", openLogin));
-  document.querySelectorAll("[data-open-wishlist]").forEach((button) => button.addEventListener("click", () => openDrawer("wishlist")));
-  document.querySelectorAll("[data-open-cart]").forEach((button) => button.addEventListener("click", () => openDrawer("cart")));
+  document.querySelectorAll("[data-open-wishlist]").forEach((button) => button.addEventListener("click", () => requireLogin(() => { openDrawer("wishlist"); return ""; })));
+  document.querySelectorAll("[data-open-cart]").forEach((button) => button.addEventListener("click", () => requireLogin(() => { openDrawer("cart"); return ""; })));
 
   drawerContent.addEventListener("click", (event) => {
     const button = event.target.closest("[data-remove-item]");
@@ -264,11 +302,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const type = button.dataset.removeType;
     if (type === "wishlist") wishlist = wishlist.filter((item) => item.id !== button.dataset.removeItem);
     else cart = cart.filter((item) => item.id !== button.dataset.removeItem);
-    storage.set("jewelnest-wishlist", wishlist);
-    storage.set("jewelnest-cart", cart);
+    saveUserData();
     updateCounts();
+    refreshAllCards();
     renderDrawer(type);
   });
+
+  // Run an action only for logged-in visitors. Otherwise show the login form and
+  // run the action automatically once the login is completed.
+  function requireLogin(action) {
+    if (user) {
+      const message = action();
+      if (message) showToast(message);
+      return;
+    }
+    pendingAction = action;
+    openLogin();
+  }
+
+  const cardRefreshers = [];
+  function refreshAllCards() {
+    cardRefreshers.forEach((refresh) => refresh());
+  }
 
   function addCardActions(card, titleElement, imageElement, priceElement) {
     if (!card || !titleElement) return;
@@ -279,8 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const actions = document.createElement("div");
     actions.className = "card-actions";
     actions.innerHTML = `
-      <button type="button" class="card-action wishlist-action" aria-label="Add ${title} to wishlist"><i class="fa fa-heart-o"></i><span>Wishlist</span></button>
-      <button type="button" class="card-action cart-action" aria-label="Add ${title} to cart"><i class="fa fa-shopping-bag"></i><span>Add to Cart</span></button>
+      <button type="button" class="card-action wishlist-action" aria-label="Add ${escapeHtml(title)} to wishlist"><i class="fa fa-heart-o"></i><span>Wishlist</span></button>
+      <button type="button" class="card-action cart-action" aria-label="Add ${escapeHtml(title)} to cart"><i class="fa fa-shopping-bag"></i><span>Add to Cart</span></button>
     `;
     card.append(actions);
 
@@ -288,28 +343,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const cartButton = actions.querySelector(".cart-action");
 
     function refreshButtons() {
-      const wished = wishlist.some((item) => item.id === product.id);
+      const wished = Boolean(user) && wishlist.some((item) => item.id === product.id);
       wishlistButton.classList.toggle("active", wished);
       wishlistButton.querySelector("i").className = wished ? "fa fa-heart" : "fa fa-heart-o";
     }
 
-    wishlistButton.addEventListener("click", () => {
+    function toggleWishlist() {
       toggleList(wishlist, product);
-      storage.set("jewelnest-wishlist", wishlist);
+      saveUserData();
       updateCounts();
-      refreshButtons();
-      showToast(wishlist.some((item) => item.id === product.id) ? "Added to wishlist." : "Removed from wishlist.");
-    });
-    cartButton.addEventListener("click", () => {
-      if (!cart.some((item) => item.id === product.id)) {
-        cart.push(product);
-        storage.set("jewelnest-cart", cart);
-        updateCounts();
-        showToast("Added to cart.");
-      } else {
-        showToast("This item is already in your cart.");
-      }
-    });
+      refreshAllCards();
+      return wishlist.some((item) => item.id === product.id) ? "Added to wishlist." : "Removed from wishlist.";
+    }
+
+    function addToCart() {
+      if (cart.some((item) => item.id === product.id)) return "This item is already in your cart.";
+      cart.push(product);
+      saveUserData();
+      updateCounts();
+      return "Added to cart.";
+    }
+
+    // Both buttons only work after login
+    wishlistButton.addEventListener("click", () => requireLogin(toggleWishlist));
+    cartButton.addEventListener("click", () => requireLogin(addToCart));
+
+    cardRefreshers.push(refreshButtons);
     refreshButtons();
   }
 
@@ -319,8 +378,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".arrival-card").forEach((card) => {
     addCardActions(card, card.querySelector("h3"), card.querySelector("img"), card.querySelector(".arrival-price strong"));
   });
-  document.querySelectorAll(".collection-card").forEach((card) => {
-    addCardActions(card.querySelector(".collection-card-body"), card.querySelector("h3"), card.querySelector("img"), null);
+  // Collection pages: only product cards are marked shoppable (information pages are not)
+  document.querySelectorAll(".collection-card[data-shoppable]").forEach((card) => {
+    addCardActions(card.querySelector(".collection-card-body"), card.querySelector("h3"), card.querySelector("img"), card.querySelector(".collection-card-price"));
   });
 
   updateUserName();
