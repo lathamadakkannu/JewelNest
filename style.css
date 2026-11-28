@@ -157,6 +157,10 @@ a {
   color: var(--gold);
   cursor: pointer;
   font-size: 17px;
+
+   -webkit-appearance: none;
+  appearance: none;
+  outline: none;
 }
 
 .search-box button:hover i,
